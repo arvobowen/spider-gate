@@ -5,7 +5,7 @@
 <h1 align="center">SpiderGate API Server</h1>
 
 <div align="center">
-  The core API gateway for handling automated workflows and integrations. It serves as the central hub for various API modules (orbs).
+  The core API gateway for handling automated workflows and integrations. It serves as the central hub for various API modules (orbs) designed to use with SpiderGate.
 </div>
 
 <div align="center">
