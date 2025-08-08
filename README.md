@@ -1,4 +1,8 @@
+<div align="center">
+
 ![SpiderGate Logo](./assets/logo.png)
+
+</div>
 
 # SpiderGate API Server
 
