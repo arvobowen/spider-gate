@@ -1,3 +1,11 @@
+## 🎯 About The Project
+
+**SpiderGate** is a lightweight, extensible Node.js server designed to act as a central gateway for various API-driven automations. Instead of deploying multiple standalone services, SpiderGate provides a core foundation that can dynamically load independent modules, which we call **"orbs."**
+
+This architecture simplifies deployment, centralizes configuration, and allows for clean, compartmentalized development of individual API functionalities.
+
+---
+
 <div align="center">
   <img src="https://raw.githubusercontent.com/arvobowen/spider-gate/main/assets/logo.png" alt="SpiderGate Logo" width="150"/>
 </div>
@@ -18,14 +26,6 @@
 
 ---
 
-## 🎯 About The Project
-
-**SpiderGate** is a lightweight, extensible Node.js server designed to act as a central gateway for various API-driven automations. Instead of deploying multiple standalone services, SpiderGate provides a core foundation that can dynamically load independent modules, which we call **"orbs."**
-
-This architecture simplifies deployment, centralizes configuration, and allows for clean, compartmentalized development of individual API functionalities.
-
----
-
 ## ✨ Features
 
 * **Modular Architecture:** Easily add new API endpoints by creating self-contained "orbs."
@@ -35,9 +35,65 @@ This architecture simplifies deployment, centralizes configuration, and allows f
 
 ---
 
-## 🚀 Getting Started
+## ⚡ Quick setup with npm package manager
 
-To get a local copy up and running, follow these simple steps.
+The fastest way to get this service up and running would be to use the npm package manager. Follow these quick steps to deploy and setup SpiderGate on a dedicated server.
+
+### Prerequisites
+
+* [Node.js](https://nodejs.org/) (LTS version recommended)
+* npm
+* **PM2:** A production process manager for Node.js. It keeps your server running 24/7 and will automatically restart it if it crashes. Install it globally with the command:
+    ```bash
+    sudo npm install pm2 -g
+    ```
+
+### Installation
+
+1.  Best security practices would suggest you create a new user dedicated to the SpiderGate process with limited access to system resources.
+    ```bash
+    # Create the user without a password
+    sudo adduser --disabled-password spidergate
+    # Create the user's group
+    sudo groupadd spidergate
+    # Add the user to the new group
+    sudo usermod -a -G spidergate spidergate
+    ```
+
+2.  Set up the dedicated server directory:
+    ```bash
+    # Create the main server directory
+    sudo mkdir -p /home/spidergate/server
+    # Set the correct ownership
+    sudo chown -R spidergate:spidergate /home/spidergate/server
+    # Switch to the new user and navigate to the directory
+    sudo -i -u spidergate
+    cd ~/server
+    ```
+
+3.  Initialize the project and create the `package.json` file:
+    ```bash
+    npm init -y
+    ```
+
+4.  Install the latest version of SpiderGate:
+    ```bash
+    npm install spider-gate
+    ```
+
+5.  Setup the PM2 service to manage and auto-run SpiderGate:
+    ```bash
+    # Start the server using the installed package's main file
+    pm2 start ./node_modules/spider-gate/index.js --name spider-gate
+    # Save the process so it will restart on server reboots
+    pm2 save
+    ```
+
+---
+
+## 🚀 Getting Started (for Developers)
+
+To get a local copy up and running for development, follow these simple steps.
 
 ### Prerequisites
 

@@ -1,19 +1,34 @@
 {
   "name": "spider-gate",
-  "version": "1.0.2",
-  "description": "",
+  "version": "1.0.4",
+  "description": "The core API gateway for handling automated workflows and integrations. It serves as the central hub for various API modules (orbs) designed to use with SpiderGate.",
   "main": "index.js",
+  "bin": {
+    "spidergate": "./spidergate.js"
+  },
+  "files": [
+    "index.js",
+    "spidergate.js",
+    "public/",
+    "postinstall.js"
+  ],
   "scripts": {
+    "postinstall": "node postinstall.js",
     "start": "node index.js",
     "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bin": {
-    "spidergate": "./spidergate.js"
-  },
+  "keywords": [
+    "api",
+    "gateway",
+    "automation",
+    "spidergate",
+    "orbs",
+    "nodejs",
+    "express"
+  ],
+  "author": "Arvo Bowen III <arvo.bowen@gmail.com>",
+  "license": "CC-BY-NC-SA-4.0",
   "dependencies": {
     "express": "^5.1.0"
   },
