@@ -11,6 +11,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "bin": {
+    "spidergate": "./spidergate.js"
+  },
   "dependencies": {
     "express": "^5.1.0"
   },
