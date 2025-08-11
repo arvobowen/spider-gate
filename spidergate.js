@@ -3,9 +3,6 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-// Helper function to check if the script was run directly via node
-const wasCalledWithNode = () => process.argv[0].includes('node');
-
 const orbsConfigPath = path.join(process.cwd(), 'orbs.json');
 
 const addOrb = (orbName) => {
@@ -30,13 +27,6 @@ const addOrb = (orbName) => {
 };
 
 // --- Main Execution ---
-if (wasCalledWithNode()) {
-  console.warn('\x1b[33m%s\x1b[0m', 'Warning: Running SpiderGate CLI directly with node.');
-  console.info('\x1b[36m%s\x1b[0m', 'For a better experience, install SpiderGate globally: npm install -g spider-gate');
-  console.info('\x1b[36m%s\x1b[0m', 'You can use commands like `spidergate add <orb-package-name>` directly in your terminal.');
-  console.log('---');
-}
-
 const command = process.argv[2];
 const orbName = process.argv[3];
 
