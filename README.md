@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./assets/logo.png" alt="SpiderGate Logo" width="150"/>
+  <img src="https://raw.githubusercontent.com/arvobowen/spider-gate/main/assets/logo.png" alt="SpiderGate Logo" width="150"/>
 </div>
 
 <h1 align="center">SpiderGate API Server</h1>
