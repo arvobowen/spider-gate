@@ -37,11 +37,16 @@ This architecture simplifies deployment, centralizes configuration, and allows f
 
 ## ♻️ Update existing installs with npm package manager
 
-If you have already installed SpiderGate previously and just need to update to the latest version then use this command to update to a specific version.  There is not a way to auto update to the latest version so you need to specify a specific version.  As an example, if the latest version was 1.0.5 you could use the following command to update.
+If you have already installed SpiderGate previously and just need to update to the latest version then use one of the following commands:
 
-```bash
-sudo npm install spider-gate@1.0.5
-```
+* This command to update to a specific version.
+    ```bash
+    sudo npm install spider-gate@1.0.5
+    ```
+* This command will auto update to the latest version.
+    ```bash
+    sudo npm update spider-gate
+    ```
 
 ---
 

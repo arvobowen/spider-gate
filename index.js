@@ -20,6 +20,8 @@ app.get('/', (req, res) => {
 
 // --- Dynamic Orb Loading ---
 const orbsConfigPath = path.join(__dirname, 'orbs.json');
+let orbsLoadedCount = 0;
+let orbsLoadResults = [];
 if (fs.existsSync(orbsConfigPath)) {
   const registeredOrbs = JSON.parse(fs.readFileSync(orbsConfigPath));
 
@@ -28,10 +30,11 @@ if (fs.existsSync(orbsConfigPath)) {
       const orb = require(orbName);
       if (orb && orb.path && orb.router) {
         app.use(orb.path, orb.router);
-        console.log(`Successfully loaded orb '${orbName}' at path: ${orb.path}`);
+        orbsLoadedCount++;
+        orbsLoadResults.push(`[success] '${orbName}' at path: ${orb.path}`);
       }
     } catch (error) {
-      console.error(`Failed to load orb '${orbName}': ${error.message}`);
+      orbsLoadResults.push(`[error] '${orbName}' : ${error.message}`);
     }
   });
 }
@@ -39,4 +42,7 @@ if (fs.existsSync(orbsConfigPath)) {
 // Start the server
 app.listen(port, () => {
   console.log(`SpiderGate server is running on http://localhost:${port}`);
+  console.log(`  Orbs config path: ${orbsConfigPath}`);
+  console.log(`  Orbs loaded: ${orbsLoadedCount}`);
+  orbsLoadResults.forEach(orbResults => console.log(`    - ${orbResults}`));
 });
