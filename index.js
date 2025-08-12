@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
 });
 
 // --- Dynamic Orb Loading ---
-const orbsConfigPath = path.join(__dirname, 'orbs.json');
+const orbsConfigPath = path.join(__dirname, '..', '..', 'orbs.json');
 let orbsLoadedCount = 0;
 let orbsLoadResults = [];
 if (fs.existsSync(orbsConfigPath)) {
