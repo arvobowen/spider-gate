@@ -1,6 +1,6 @@
 {
   "name": "spider-gate",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "The core API gateway for handling automated workflows and integrations. It serves as the central hub for various API modules (orbs) designed to use with SpiderGate.",
   "main": "index.js",
   "bin": {
@@ -15,8 +15,9 @@
   "scripts": {
     "postinstall": "node postinstall.js",
     "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "link": "node link-orb.js",
+    "dev": "cross-env NODE_ENV=development nodemon index.js",
+    "remote": "cross-env NODE_ENV=development ngrok http 3000"
   },
   "keywords": [
     "api",
@@ -30,9 +31,11 @@
   "author": "Arvo Bowen III <arvo.bowen@gmail.com>",
   "license": "CC-BY-NC-SA-4.0",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^5.1.0"
   },
   "devDependencies": {
+    "cross-env": "^10.0.0",
     "nodemon": "^3.1.10"
   }
 }
