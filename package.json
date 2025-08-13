@@ -1,16 +1,13 @@
 {
   "name": "spider-gate",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "The core API gateway for handling automated workflows and integrations. It serves as the central hub for various API modules (orbs) designed to use with SpiderGate.",
   "main": "index.js",
   "bin": {
     "spidergate": "./spidergate.js"
   },
   "files": [
-    "index.js",
-    "spidergate.js",
-    "public/",
-    "postinstall.js"
+    "*.*"
   ],
   "scripts": {
     "postinstall": "node postinstall.js",
