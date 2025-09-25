@@ -4,7 +4,7 @@
   "description": "The core API gateway for handling automated workflows and integrations. It serves as the central hub for various API modules (orbs) designed to use with SpiderGate.",
   "main": "index.js",
   "bin": {
-    "spidergate": "./spidergate.js"
+    "spidergate": "spidergate.js"
   },
   "scripts": {
     "postinstall": "node postinstall.js",
