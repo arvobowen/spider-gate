@@ -1,5 +1,3 @@
-// C:\Sandbox\spider-gate\link-orb.js
-
 const { execSync } = require('child_process');
 const path = require('path');
 

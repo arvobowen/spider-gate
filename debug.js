@@ -1,5 +1,3 @@
-// File: debug.js
-
 // Import necessary modules
 const log = require('./logging.js');
 

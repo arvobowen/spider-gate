@@ -1,5 +1,3 @@
-// index.js
-
 // Import necessary modules
 const express = require('express');
 const path = require('path');
@@ -55,8 +53,8 @@ const loadedOrbs = [];
 
 // Serve the static landing page for the core service
 app.get('/', (req, res) => {
-  const onlineOrbs = loadedOrbs.filter(orb => orb.status === 'Online').map(orb => orb.name); // {{change 1}}
-  const orbList = onlineOrbs.length > 0 ? onlineOrbs.join(', ') : '[none]'; // {{change 2}}
+  const onlineOrbs = loadedOrbs.filter(orb => orb.status === 'Online').map(orb => orb.name);
+  const orbList = onlineOrbs.length > 0 ? onlineOrbs.join(', ') : '[none]';
   log.info(`Serving the landing page. Loaded orbs: ${orbList}`);
 
   // Read the index.html file
@@ -185,7 +183,6 @@ if (process.env.NODE_ENV === 'development') {
         loadedOrbs.push({ name: lastOrbName, path: null, status: 'Offline' });
 
         // If any orb fails to load, we set the count to -1 to indicate an error state
-        //orbsLoadedCount = -1;
         orbError = true;
       }
     }
@@ -207,12 +204,8 @@ if (process.env.NODE_ENV === 'development') {
 
   // Start the server and store the server instance
   const server = app.listen(port, () => {
-    //if (orbsLoadedCount === -1) {
-    //  shutdown();
-    //} else {
-      log.info(`* SpiderGate server is running on http://localhost:${port}`);
-      console.log("");
-    //}
+    log.info(`* SpiderGate server is running on http://localhost:${port}`);
+    console.log("");
   });
 
 })(); // End of async IIFE

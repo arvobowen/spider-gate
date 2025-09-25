@@ -1,5 +1,3 @@
-// File: logging.js
-
 // This module provides a simple logging utility for the SpiderGate server.
 // It can be used to log messages with a consistent format across the application.
 
