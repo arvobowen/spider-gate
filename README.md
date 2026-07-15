@@ -132,6 +132,69 @@ To get a local copy up and running for development, follow these simple steps.
 
 ---
 
+## 🧪 Testing Changes Pipeline
+
+**1. Open SpiderGate Repository**  
+Open the `spider-gate` source code repository in your VSCode editor and edit your `index.js` file (or any other required files).
+
+**2. Open Terminal**  
+Open the integrated terminal in the SpiderGate VSCode window using the keyboard shortcut:
+```bash
+Ctrl + `
+```
+
+**3. Fix Package Vulnerabilities (If Prompted)**  
+If the output from the link command warns you about vulnerabilities (e.g., "6 vulnerabilities (3 moderate, 3 high)"), address them by running:
+```bash
+npm audit fix
+```
+
+**4. Start the Server**  
+Run the development script in the SpiderGate terminal to start the server. This will dynamically load your linked orb so you can test it locally:
+```bash
+npm run dev
+```
+
+---
+
+## 🚀 Deployment
+
+**1. Bump Version & Push to GitHub**  
+Update your package version (patch, minor, or major) and push your latest code to the repository.
+```bash
+npm version patch
+git add .
+git commit -m "Prepare new release"
+git push
+```
+
+**2. Publish the Package**  
+Publish the newly versioned orb to the npm registry so the Ubuntu server can pull it down.
+```bash
+npm publish
+```
+
+**3. SSH & Access Server Directory**  
+Connect to your Ubuntu server, switch to the dedicated `spidergate` user account, and navigate to the core server directory.
+```bash
+sudo -i -u spidergate
+cd ~/server
+```
+
+**4. Update the API Server**  
+Install the latest version of the spidergate package that you just published.
+```bash
+npm update spidergate
+```
+
+**5. Restart PM2 Service**  
+Restart the SpiderGate core service.
+```bash
+pm2 restart spidergate
+```
+
+---
+
 ## 🏛️ Architecture
 
 SpiderGate is designed with a core and plugin architecture.
