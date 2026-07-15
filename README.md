@@ -191,7 +191,8 @@ npm update spidergate
 **5. Restart PM2 Service**  
 Restart the SpiderGate core service.
 ```bash
-pm2 restart spidergate
+pm2 status
+pm2 restart spider-gate
 ```
 
 ---
