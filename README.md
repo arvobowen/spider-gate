@@ -171,6 +171,7 @@ git push
 **2. Publish the Package**  
 Publish the newly versioned orb to the npm registry so the Ubuntu server can pull it down.
 ```bash
+npm login
 npm publish
 ```
 
