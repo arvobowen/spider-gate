@@ -135,6 +135,12 @@ if (process.env.NODE_ENV === 'development') {
   let orbsLoadedCount = 0;
   let orbError = false;
 
+  // Inject the core logger into all incoming requests
+  app.use((req, res, next) => {
+    req.log = log;
+    next();
+  });
+
   // Load the orbs
   if (fs.existsSync(orbsConfigPath)) {
     const registeredOrbs = JSON.parse(fs.readFileSync(orbsConfigPath));
@@ -158,8 +164,10 @@ if (process.env.NODE_ENV === 'development') {
           log.message("    - Searching for init() function in orb...");
           if (typeof orb.init === 'function') {
             log.message("    - Found an init() function, executing...");
-            // Await the promise from the init function
-            const response = await orb.init();
+
+            // Pass the log object into the init function using a context object then await the promise from the init function
+						const response = await orb.init({ log: log });
+            
             log.message(`    - [${orbName}] ${response}`);
             log.message("    - Init() function executed successfully.");
           } else {
@@ -174,9 +182,58 @@ if (process.env.NODE_ENV === 'development') {
         }
       } catch (error) {
         if (error.code === 'MODULE_NOT_FOUND') {
-          log.error(`'${lastOrbName}' orb not found : run 'npm run link ${lastOrbName}' to try and establish a local link.`);
+          // Check if the error message specifically mentions the orb's name
+          if (error.message.includes(`Cannot find module '${lastOrbName}'`)) {
+            // The orb itself is missing
+
+            log.error(`'${lastOrbName}' orb not found : run 'npm run link ${lastOrbName}' to try and establish a local link.`);
+          } else {
+            // The orb was found, but a dependency inside it is missing
+
+            // Extract the missing module name from the error message
+            let missingModule = '';
+            const match = error.message.match(/Cannot find module '([^']+)'/);
+            if (match && match[1]) {
+              missingModule = match[1];
+            }
+
+            // Check if the missing module is listed in the orb's package.json dependencies or devDependencies
+            let isInPackage = false;
+            if (missingModule) {
+              try {
+                const orbIndexPath = require.resolve(lastOrbName);
+                const orbPkgPath = require('path').join(require('path').dirname(orbIndexPath), 'package.json');
+                const orbPkg = JSON.parse(require('fs').readFileSync(orbPkgPath, 'utf8'));
+                
+                if ((orbPkg.dependencies && orbPkg.dependencies[missingModule]) || 
+                  (orbPkg.devDependencies && orbPkg.devDependencies[missingModule])) {
+                  isInPackage = true;
+                }
+              } catch (pkgError) {}
+            }
+
+            // Extract the lines into an array once
+            const errorLines = error.message.split('\n');
+            
+            // Provide a tip message based on whether the missing module is in the orb's package.json or not
+            const tipMsg = isInPackage
+              ? `Navigate to the '${lastOrbName}' directory and run 'npm install' to ensure all packages are downloaded.`
+              : `Navigate to the '${lastOrbName}' directory and run 'npm install ${missingModule}' to ensure the package is downloaded.`;
+            
+				    log.error(`'${lastOrbName}' failed to load due to a missing dependency.`);
+            log.error(`  > ${errorLines[0]}`);
+            log.error(`  > Tip: ${tipMsg}`);
+            log.error('');
+            
+            // Check if there is a require stack, slice from index 1 to the end, and join with newlines
+            if (errorLines.length > 1) {
+              log.error(`${errorLines.slice(1).join('\n')}`);
+            }
+          }
         } else {
-          log.error(error);
+          // Handle any other type of error (like syntax errors in the orb or your custom missing API key error)
+          log.error(`'${lastOrbName}' encountered an error during initialization:`);
+          log.error(`  > ${error.message || error}`);
         }
 
         // Add the orb to the loadedOrbs array for reference later
