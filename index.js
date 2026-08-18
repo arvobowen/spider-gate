@@ -164,9 +164,12 @@ if (process.env.NODE_ENV === 'development') {
           log.message("    - Searching for init() function in orb...");
           if (typeof orb.init === 'function') {
             log.message("    - Found an init() function, executing...");
+            log.message("--------------------------------------------------------------------");
 
             // Pass the log object into the init function using a context object then await the promise from the init function
             const response = await orb.init({ log: log });
+
+            log.message("--------------------------------------------------------------------");
 
             log.message(`    - [${orbName}] ${response}`);
             log.message("    - Init() function executed successfully.");
