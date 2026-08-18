@@ -36,7 +36,7 @@ app.use((err, req, res, next) => {
       log.error(`Malformed JSON: ${err.message}`);
       log.debug(`Raw body: ${req.rawBody ? req.rawBody.toString() : 'No raw body available'}`);
     }
-    
+
     // Respond with a 400 Bad Request error and a JSON message
     return res.status(400).send({
       success: false,
@@ -82,8 +82,8 @@ app.get('/', (req, res) => {
           </thead>
           <tbody>
             ${loadedOrbs
-              .map(
-                (orb) => `
+          .map(
+            (orb) => `
               <tr>
                 <td class="p-2 text-center">
                   <span class="w-3 h-3 ${orb.status === 'Online' ? 'bg-green-400' : 'bg-red-400'} rounded-full mr-3 animate-pulse inline-block"></span>
@@ -94,14 +94,14 @@ app.get('/', (req, res) => {
                 <td class="p-2 text-center">${orb.name}</td>
                 <td class="p-2 text-center">
                 ${orb.path === null
-                  ? 'N/A'
-                  : `<a href="${orb.path}" class="text-blue-500 hover:text-blue-300 underline">${orb.path}</a>`
-                }
+                ? 'N/A'
+                : `<a href="${orb.path}" class="text-blue-500 hover:text-blue-300 underline">${orb.path}</a>`
+              }
                 </td>
               </tr>
               `
-              )
-              .join('')}
+          )
+          .join('')}
           </tbody>
         </table>
       </div>
@@ -156,27 +156,27 @@ if (process.env.NODE_ENV === 'development') {
         log.message("    - Found orb module, staging it...");
         const orb = require(orbName);
         log.message("    - Orb module staged, loading it...");
-        
+
         if (orb && orb.path && orb.router) {
           app.use(orb.path, orb.router);
-          
+
           // Check if the loaded orb has an init function
           log.message("    - Searching for init() function in orb...");
           if (typeof orb.init === 'function') {
             log.message("    - Found an init() function, executing...");
 
             // Pass the log object into the init function using a context object then await the promise from the init function
-						const response = await orb.init({ log: log });
-            
+            const response = await orb.init({ log: log });
+
             log.message(`    - [${orbName}] ${response}`);
             log.message("    - Init() function executed successfully.");
           } else {
             log.message("    - No init() function found in orb.");
           }
-          
+
           orbsLoadedCount++;
           log.success(`    - Successfully loaded '${orbName}' at path: '${orb.path}'.`);
-          
+
           // Add the orb to the loadedOrbs array for reference later
           loadedOrbs.push({ name: orbName, path: orb.path, status: 'Online' });
         }
@@ -204,27 +204,27 @@ if (process.env.NODE_ENV === 'development') {
                 const orbIndexPath = require.resolve(lastOrbName);
                 const orbPkgPath = require('path').join(require('path').dirname(orbIndexPath), 'package.json');
                 const orbPkg = JSON.parse(require('fs').readFileSync(orbPkgPath, 'utf8'));
-                
-                if ((orbPkg.dependencies && orbPkg.dependencies[missingModule]) || 
+
+                if ((orbPkg.dependencies && orbPkg.dependencies[missingModule]) ||
                   (orbPkg.devDependencies && orbPkg.devDependencies[missingModule])) {
                   isInPackage = true;
                 }
-              } catch (pkgError) {}
+              } catch (pkgError) { }
             }
 
             // Extract the lines into an array once
             const errorLines = error.message.split('\n');
-            
+
             // Provide a tip message based on whether the missing module is in the orb's package.json or not
             const tipMsg = isInPackage
               ? `Navigate to the '${lastOrbName}' directory and run 'npm install' to ensure all packages are downloaded.`
               : `Navigate to the '${lastOrbName}' directory and run 'npm install ${missingModule}' to ensure the package is downloaded.`;
-            
-				    log.error(`'${lastOrbName}' failed to load due to a missing dependency.`);
+
+            log.error(`'${lastOrbName}' failed to load due to a missing dependency.`);
             log.error(`  > ${errorLines[0]}`);
             log.error(`  > Tip: ${tipMsg}`);
             log.error('');
-            
+
             // Check if there is a require stack, slice from index 1 to the end, and join with newlines
             if (errorLines.length > 1) {
               log.error(`${errorLines.slice(1).join('\n')}`);
