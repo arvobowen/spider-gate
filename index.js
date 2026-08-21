@@ -247,6 +247,8 @@ if (process.env.NODE_ENV === 'development') {
       }
     }
   }
+
+  // Check for errors and log the number of loaded orbs
   if (orbError && orbsLoadedCount < 1) {
     log.error(`  [ Orbs loaded: 0 ]`);
   } else {
@@ -261,6 +263,11 @@ if (process.env.NODE_ENV === 'development') {
       process.exit(1);
     });
   };
+
+  // Catch all bad API endpoint requests.  If a request makes it this far, no orb claimed it.
+  app.use((req, res) => {
+    res.status(404).json({ error: "Sorry, but this API endpoint does not exist." });
+  });
 
   // Start the server and store the server instance
   const server = app.listen(port, () => {
