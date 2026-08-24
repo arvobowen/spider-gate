@@ -1,8 +1,8 @@
-import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+const { readFileSync, writeFileSync } = require('fs');
+const { join } = require('path');
 
-const orbsConfigPath = join(import.meta.dirname, 'orbs.json');
-const nodemonConfigPath = join(import.meta.dirname, 'nodemon.json');
+const orbsConfigPath = join(__dirname, 'orbs.json');
+const nodemonConfigPath = join(__dirname, 'nodemon.json');
 
 try {
     // Read the array of registered orbs
