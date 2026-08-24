@@ -1,0 +1,15 @@
+{
+  "//": "Created by automated script generate-nodemon-watches.js to automate orb monitoring.",
+  "watch": [
+    ".",
+    "../sg-docketsafe-updates"
+  ],
+  "ignore": [
+    "stats.json",
+    "*.sqlite",
+    "downloads/*",
+    "cache/*",
+    "node_modules/*"
+  ],
+  "ext": "js,mjs,cjs,json"
+}

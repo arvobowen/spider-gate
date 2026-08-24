@@ -10,7 +10,7 @@
     "postinstall": "node postinstall.js",
     "start": "node index.js",
     "link": "node link-orb.js",
-    "dev": "cross-env NODE_ENV=development nodemon index.js",
+    "dev": "node generate-nodemon-watches.js && cross-env NODE_ENV=development nodemon index.js",
     "remote": "cross-env NODE_ENV=development ngrok http 3000"
   },
   "keywords": [
