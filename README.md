@@ -157,6 +157,43 @@ npm run dev
 
 ---
 
+## Development Notes
+
+### Handling Styles For Node HTML Pages:
+#### Generating styles sheet for pages like /public/index.html
+For your standard Node.JS pages leaning on tailwind for its styles, usually you might default to using something like the following in your header:
+
+`<script src="https://cdn.tailwindcss.com"></script>`
+
+However, for production sites, this is a bad idea because that will go out to the tailwind website then try to use your index.html page to find all the
+syles you reference and return a stylesheet custom for your needs wasting a lot of time.  Instead you need to create a local copy of these styles.
+
+To do this, you need to install tailwind first:
+
+`npm install -D tailwindcss @tailwindcss/cli`
+
+Then you need to create a temp file to reference tailwindcss resources and the target html page to generate styles from.
+
+### input.css
+```
+@import "tailwindcss";
+@source "./index.html";
+```
+
+Next you need to run the following command from the root of the repo:
+
+`npx @tailwindcss/cli -i ./public/input.css -o ./public/index.css`
+
+Then last, you need to delete this line from the \<head\> in `index.html`:
+
+`<script src="https://cdn.tailwindcss.com"></script>`
+
+And finally add this line to the \<head\> in `index.html`:
+
+`<link href="./index.css" rel="stylesheet">`
+
+---
+
 ## 🚀 Deployment
 
 **1. Bump Version & Push to GitHub**  
