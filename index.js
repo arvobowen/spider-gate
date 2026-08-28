@@ -266,7 +266,32 @@ if (process.env.NODE_ENV === 'development') {
 
   // Catch all bad API endpoint requests.  If a request makes it this far, no orb claimed it.
   app.use((req, res) => {
-    res.status(404).json({ error: "Sorry, but this API endpoint does not exist." });
+    res.status(404).send(`
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <!-- Automatically redirect to the root after 2 seconds -->
+              <meta http-equiv="refresh" content="2;url=/" />
+              <title>Page Not Found</title>
+              <style>
+                  body { 
+                      background-color: #0d1117; 
+                      color: white; 
+                      font-family: 'Inter', sans-serif; 
+                      display: flex; 
+                      justify-content: center; 
+                      align-items: center; 
+                      height: 100vh; 
+                      margin: 0; 
+                  }
+              </style>
+          </head>
+          <body>
+              <h2>Invalid Page: Redirecting...</h2>
+          </body>
+          </html>
+      `);
   });
 
   // Start the server and store the server instance
