@@ -83,7 +83,9 @@ app.get('/', (req, res) => {
           <tbody>
             ${loadedOrbs
           .map(
-            (orb) => `
+            (orb) => {
+              const displayName = orb.name.split('/').pop();
+              return `
               <tr>
                 <td class="p-2 text-center">
                   <span class="w-3 h-3 ${orb.status === 'Online' ? 'bg-green-400' : 'bg-red-400'} rounded-full mr-3 animate-pulse inline-block"></span>
@@ -91,15 +93,16 @@ app.get('/', (req, res) => {
                 <td class="p-2 text-center">
                   <span class="${orb.status === 'Online' ? 'text-green-300' : 'text-red-300'}">${orb.status === 'Online' ? 'Online' : 'Offline'}</span>
                 </td>
-                <td class="p-2 text-center">${orb.name}</td>
+                <td class="p-2 text-center">${displayName}</td>
                 <td class="p-2 text-center">
                 ${orb.path === null
-                ? 'N/A'
-                : `<a href="${orb.path}" class="text-blue-500 hover:text-blue-300 underline">${orb.path}</a>`
-              }
+                  ? 'N/A'
+                  : `<a href="${orb.path}" class="text-blue-500 hover:text-blue-300 underline">${orb.path}</a>`
+                }
                 </td>
               </tr>
               `
+            }
           )
           .join('')}
           </tbody>
