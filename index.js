@@ -1,262 +1,101 @@
-// Import necessary modules
-const express = require('express');
+// Node.js built-in module includes
 const path = require('path');
 const fs = require('fs');
-const cors = require('cors');
-const debug = require('./debug.js');
-const log = require('./logging.js');
 
-// SpiderGate Core Service - Main Entry Point
+// Third party module includes
+const express = require('express');
+const cors = require('cors');
+
+// Utility modules
+const log = require('./middleware/log');
+const debug = require('./middleware/debug');
+const identity = require('./middleware/identity');
+const errorHandler = require('./middleware/errorHandler');
+const jsonParser = require('./middleware/json');
+
+
 log.header("SpiderGate server starting up...");
+
+
+// Determine the data directory for persistent storage
+const { getDataDir } = require('./Helpers/OS');
+const dataDir = getDataDir('SpiderGate');
+
+// Run strict environment validation FIRST. If it fails, an error is thrown and SpiderGate catches it immediately.
+const { validateAndLoadEnv } = require('./Helpers/EnvManager');
+validateAndLoadEnv(dataDir);
+
 
 // Create an Express application
 const app = express();
 const port = process.env.PORT || 3000;
 
-// --- Middleware ---
 
-// Enable CORS for all routes
+// Middleware
 app.use(cors());
-
-// Enable the debugger
+app.use(log);
 app.use(debug);
+app.use(errorHandler);
+app.use(jsonParser);
 
-// Parse JSON bodies and also store the raw body in req.rawBody for later use if needed
-app.use(express.json({
-  verify: (req, res, buf) => {
-    req.rawBody = buf;
-  }
-}));
 
-// Error handling middleware for malformed JSON
-app.use((err, req, res, next) => {
-  // Check if the error is a malformed JSON syntax error
-  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-    if (debug.DebugOn) {
-      log.error(`Malformed JSON: ${err.message}`);
-      log.debug(`Raw body: ${req.rawBody ? req.rawBody.toString() : 'No raw body available'}`);
-    }
+// Controllers
+const publicController = require('./controllers/public');
 
-    // Respond with a 400 Bad Request error and a JSON message
-    return res.status(400).send({
-      success: false,
-      message: 'Invalid JSON payload received.'
-    });
-  }
 
-  // Pass any other errors to the default Express error handler
-  next();
-});
+// Services
+const orbLoader = require('./services/orbLoader');
 
-// Create an array of currently loaded orbs to check later on
+
+// Initialize the array to hold loaded orbs and the path to the orbs configuration file
 const loadedOrbs = [];
-
-// Serve the static landing page for the core service
-app.get('/', (req, res) => {
-  const onlineOrbs = loadedOrbs.filter(orb => orb.status === 'Online').map(orb => orb.name);
-  const orbList = onlineOrbs.length > 0 ? onlineOrbs.join(', ') : '[none]';
-  log.info(`Serving the landing page. Loaded orbs: ${orbList}`);
-
-  // Read the index.html file
-  const indexPath = path.join(__dirname, 'public', 'index.html');
-  fs.readFile(indexPath, 'utf8', (err, html) => {
-    if (err) {
-      console.error('Error reading index.html:', err);
-      return res.status(500).send('Internal Server Error');
-    }
-
-    // Inject the loadedOrbs into the HTML
-    const modifiedHtml = html.replace(
-      '<p class="text-center"><span>[ No orbs active ]</span></p>',
-      loadedOrbs.length > 0
-        ? `
-      <div class="rounded-xl overflow-hidden border border-blue-300">
-        <table class="w-full bg-blue-950/50">
-          <thead>
-            <tr class="text-left">
-              <th class="p-2 text-center"></th>
-              <th class="p-2 text-center">Status</th>
-              <th class="p-2 text-center">Orb</th>
-              <th class="p-2 text-center">URL</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${loadedOrbs
-          .map(
-            (orb) => {
-              const displayName = orb.name.split('/').pop();
-              return `
-              <tr>
-                <td class="p-2 text-center">
-                  <span class="w-3 h-3 ${orb.status === 'Online' ? 'bg-green-400' : 'bg-red-400'} rounded-full mr-3 animate-pulse inline-block"></span>
-                </td>
-                <td class="p-2 text-center">
-                  <span class="${orb.status === 'Online' ? 'text-green-300' : 'text-red-300'}">${orb.status === 'Online' ? 'Online' : 'Offline'}</span>
-                </td>
-                <td class="p-2 text-center">${displayName}</td>
-                <td class="p-2 text-center">
-                ${orb.path === null
-                  ? 'N/A'
-                  : `<a href="${orb.path}" class="text-blue-500 hover:text-blue-300 underline">${orb.path}</a>`
-                }
-                </td>
-              </tr>
-              `
-            }
-          )
-          .join('')}
-          </tbody>
-        </table>
-      </div>
-      `
-        : '<div class="flex flex-wrap gap-2"><span>[ No orbs active ]</span></div>'
-    );
-
-    res.send(modifiedHtml);
-  });
-});
-
-// Serve anything in the public folder that hasn't been explicitly handled already
-app.use(express.static(path.join(__dirname, 'public')));
-
-// --- Dynamic Orb Loading ---
 let orbsConfigPath;
 
-// Check if we are in the 'development' environment
+
+// Determine the path to the orbs configuration file based on the environment
+// development: ./orbs.json
+// production: ../../orbs.json
 if (process.env.NODE_ENV === 'development') {
   orbsConfigPath = path.join(__dirname, 'orbs.json');
 } else {
   orbsConfigPath = path.join(__dirname, '..', '..', 'orbs.json');
 }
 
-// Use an async IIFE (Immediately Invoked Function Expression) to allow looping through all
-// the orbs and awaiting their initialization if they have an init function.
+
+
+// --- STATIC FILES ---
+// Serve anything in the public folder that hasn't been explicitly handled already
+app.use(express.static(path.join(__dirname, 'public')));
+
+
+
+// --- GLOBAL UMBRELLA (middleware used for all requests) ---
+// Inject clean IP and origin strings into EVERY request
+app.use(identity.requestOrigin);
+
+
+
+// --- ROUTES: PUBLIC ---
+// Initialize the public controller with the currently loaded orbs so the controller has a REFERENCE to the array
+publicController.initializeController(loadedOrbs);
+// GET / : Serve the index.html landing page explicitly passing the loadedOrbs array into the public controller
+app.get('/', publicController.getLandingPage);
+
+
+
+// --- ASYNC IIFE (Immediately Invoked Function Expression) ORB LOADER ---
+// Run the async loader (for dynamic orb loading)
 (async () => {
-  log.info(`* Orbs config path: ${orbsConfigPath}`);
-  log.info("* Loading Orbs...");
+  await orbLoader.load(app, loadedOrbs, orbsConfigPath);
 
-  let orbsLoadedCount = 0;
-  let orbError = false;
+  // Catch all bad API endpoint requests.  If a request makes it this far, no orb claimed it.
+  app.use('/', publicController.getInvalidRedirectPage);
 
-  // Inject the core logger into all incoming requests
-  app.use((req, res, next) => {
-    req.log = log;
-    next();
+  // Start the server and store the server instance
+  const server = app.listen(port, () => {
+    log.info(`* SpiderGate server is running on http://localhost:${port}`);
+    console.log("");
   });
-
-  // Load the orbs
-  if (fs.existsSync(orbsConfigPath)) {
-    const registeredOrbs = JSON.parse(fs.readFileSync(orbsConfigPath));
-
-    // Use a for...of loop to handle async operations sequentially
-    let lastOrbName = null;
-    for (const orbName of registeredOrbs) {
-      lastOrbName = orbName;
-
-      try {
-        log.message(`  > Searching for orb '${orbName}'...`);
-        require.resolve(orbName);
-        log.message("    - Found orb module, staging it...");
-        const orb = require(orbName);
-        log.message("    - Orb module staged, loading it...");
-
-        if (orb && orb.path && orb.router) {
-          app.use(orb.path, orb.router);
-
-          // Check if the loaded orb has an init function
-          log.message("    - Searching for init() function in orb...");
-          if (typeof orb.init === 'function') {
-            log.message("    - Found an init() function, executing...");
-            log.message("--------------------------------------------------------------------");
-
-            // Pass the log object into the init function using a context object then await the promise from the init function
-            const response = await orb.init({ log: log });
-
-            log.message("--------------------------------------------------------------------");
-
-            log.message(`    - [${orbName}] ${response}`);
-            log.message("    - Init() function executed successfully.");
-          } else {
-            log.message("    - No init() function found in orb.");
-          }
-
-          orbsLoadedCount++;
-          log.success(`    - Successfully loaded '${orbName}' at path: '${orb.path}'.`);
-
-          // Add the orb to the loadedOrbs array for reference later
-          loadedOrbs.push({ name: orbName, path: orb.path, status: 'Online' });
-        }
-      } catch (error) {
-        if (error.code === 'MODULE_NOT_FOUND') {
-          // Check if the error message specifically mentions the orb's name
-          if (error.message.includes(`Cannot find module '${lastOrbName}'`)) {
-            // The orb itself is missing
-
-            log.error(`'${lastOrbName}' orb not found : run 'npm run link ${lastOrbName}' to try and establish a local link.`);
-          } else {
-            // The orb was found, but a dependency inside it is missing
-
-            // Extract the missing module name from the error message
-            let missingModule = '';
-            const match = error.message.match(/Cannot find module '([^']+)'/);
-            if (match && match[1]) {
-              missingModule = match[1];
-            }
-
-            // Check if the missing module is listed in the orb's package.json dependencies or devDependencies
-            let isInPackage = false;
-            if (missingModule) {
-              try {
-                const orbIndexPath = require.resolve(lastOrbName);
-                const orbPkgPath = require('path').join(require('path').dirname(orbIndexPath), 'package.json');
-                const orbPkg = JSON.parse(require('fs').readFileSync(orbPkgPath, 'utf8'));
-
-                if ((orbPkg.dependencies && orbPkg.dependencies[missingModule]) ||
-                  (orbPkg.devDependencies && orbPkg.devDependencies[missingModule])) {
-                  isInPackage = true;
-                }
-              } catch (pkgError) { }
-            }
-
-            // Extract the lines into an array once
-            const errorLines = error.message.split('\n');
-
-            // Provide a tip message based on whether the missing module is in the orb's package.json or not
-            const tipMsg = isInPackage
-              ? `Navigate to the '${lastOrbName}' directory and run 'npm install' to ensure all packages are downloaded.`
-              : `Navigate to the '${lastOrbName}' directory and run 'npm install ${missingModule}' to ensure the package is downloaded.`;
-
-            log.error(`'${lastOrbName}' failed to load due to a missing dependency.`);
-            log.error(`  > ${errorLines[0]}`);
-            log.error(`  > Tip: ${tipMsg}`);
-            log.error('');
-
-            // Check if there is a require stack, slice from index 1 to the end, and join with newlines
-            if (errorLines.length > 1) {
-              log.error(`${errorLines.slice(1).join('\n')}`);
-            }
-          }
-        } else {
-          // Handle any other type of error (like syntax errors in the orb or your custom missing API key error)
-          log.error(`'${lastOrbName}' encountered an error during initialization:`);
-          log.error(`  > ${error.message || error}`);
-        }
-
-        // Add the orb to the loadedOrbs array for reference later
-        loadedOrbs.push({ name: lastOrbName, path: null, status: 'Offline' });
-
-        // If any orb fails to load, we set the count to -1 to indicate an error state
-        orbError = true;
-      }
-    }
-  }
-
-  // Check for errors and log the number of loaded orbs
-  if (orbError && orbsLoadedCount < 1) {
-    log.error(`  [ Orbs loaded: 0 ]`);
-  } else {
-    log.success(`  [ Orbs loaded: ${orbsLoadedCount} ]`);
-  }
 
   // A function to handle the shutdown
   const shutdown = () => {
@@ -266,41 +105,4 @@ if (process.env.NODE_ENV === 'development') {
       process.exit(1);
     });
   };
-
-  // Catch all bad API endpoint requests.  If a request makes it this far, no orb claimed it.
-  app.use((req, res) => {
-    res.status(404).send(`
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-              <meta charset="UTF-8">
-              <!-- Automatically redirect to the root after 2 seconds -->
-              <meta http-equiv="refresh" content="2;url=/" />
-              <title>Page Not Found</title>
-              <style>
-                  body { 
-                      background-color: #0d1117; 
-                      color: white; 
-                      font-family: 'Inter', sans-serif; 
-                      display: flex; 
-                      justify-content: center; 
-                      align-items: center; 
-                      height: 100vh; 
-                      margin: 0; 
-                  }
-              </style>
-          </head>
-          <body>
-              <h2>Invalid Page: Redirecting...</h2>
-          </body>
-          </html>
-      `);
-  });
-
-  // Start the server and store the server instance
-  const server = app.listen(port, () => {
-    log.info(`* SpiderGate server is running on http://localhost:${port}`);
-    console.log("");
-  });
-
-})(); // End of async IIFE
+})();

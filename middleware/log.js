@@ -1,5 +1,12 @@
-// This module provides a simple logging utility for the SpiderGate server.
-// It can be used to log messages with a consistent format across the application.
+/**
+ * Summary: Provides a simple logging utility for the SpiderGate server orbs (modules).
+ * It can be used to log messages with a consistent format across all applications.
+ * Usage: Import this module and use the provided functions to log messages with different levels of severity.
+ * Example:
+ * const log = require('./middleware/log');
+ * app.use(log);
+ * req.log.info('This is an info message');
+ */
 
 /**
  * ANSI Escape Codes for Text Formatting
@@ -88,26 +95,38 @@ function error(err) {
     if (err instanceof Error) {
         const errorStack = err.stack;
         const stackLines = errorStack.split('\n');
-    
+
         // The first line of the stack is the error message itself,
         // and the second line usually contains the file and line number.
         // For Node.js, it often looks like: "    at <function> (<file>:<line>:<column>)"
         const errorLocation = stackLines[1] ? stackLines[1].trim() : 'Unknown location';
-        
+
         // Log the error message and its location
         console.error(`\x1b[31m${consoleHeader}ERROR: ${err.message}\n${consoleHeader}  at ${errorLocation}\x1b[0m`);
-      } else {
+    } else {
         // If it's not an Error object, just log the message as a regular error
         console.error(`${consoleHeader}\x1b[31m${err}\x1b[0m`);
-      }
+    }
 }
 
-// Export the function to be used in other files
-module.exports = {
-    header,
-    message,
-    success,
-    info,
-    debug,
-    error
+// Middleware to inject the logging utility into the request object
+const reqInjection = (req, res, next) => {
+    // Inject the logging utility into the request object if it doesn't already exist
+    if (!req.log) {
+        req.log = reqInjection;
+    }
+
+    // Pass control to the next middleware in line
+    next();
 };
+
+// Attach the individual logging functions to the middleware function itself for direct access
+reqInjection.header = header;
+reqInjection.message = message;
+reqInjection.success = success;
+reqInjection.info = info;
+reqInjection.debug = debug;
+reqInjection.error = error;
+
+// Export the middleware function to be used in other files
+module.exports = reqInjection;
