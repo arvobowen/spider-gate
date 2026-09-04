@@ -22,13 +22,22 @@ const { getDataDir } = require('./Helpers/OS');
 const dataDir = getDataDir('SpiderGate');
 
 // Run strict environment validation FIRST. If it fails, an error is thrown and SpiderGate catches it immediately.
+let orbConfig = {};
 const { validateAndLoadEnv } = require('./Helpers/EnvManager');
-validateAndLoadEnv(dataDir);
+orbConfig = validateAndLoadEnv(dataDir);
 
 
 // Create an Express application
 const app = express();
-const port = process.env.PORT || 3000;
+
+// Inject orbConfig into every request for easy access within route handlers
+app.use((req, res, next) => {
+  req.orbConfig = orbConfig;
+  next();
+});
+
+// Set the listening port for the server
+const port = orbConfig.PORT || 3000;
 
 
 // Middleware
@@ -37,6 +46,7 @@ app.use(log);
 app.use(debug);
 app.use(errorHandler);
 app.use(jsonParser);
+const statsTracker = require('./middleware/statsTracker');
 
 
 // Controllers
@@ -55,7 +65,7 @@ let orbsConfigPath;
 // Determine the path to the orbs configuration file based on the environment
 // development: ./orbs.json
 // production: ../../orbs.json
-if (process.env.NODE_ENV === 'development') {
+if (orbConfig.NODE_ENV === 'development') {
   orbsConfigPath = path.join(__dirname, 'orbs.json');
 } else {
   orbsConfigPath = path.join(__dirname, '..', '..', 'orbs.json');
@@ -65,7 +75,9 @@ if (process.env.NODE_ENV === 'development') {
 
 // --- STATIC FILES ---
 // Serve anything in the public folder that hasn't been explicitly handled already
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  index: false
+}));
 
 
 
@@ -80,6 +92,17 @@ app.use(identity.requestOrigin);
 publicController.initializeController(loadedOrbs);
 // GET / : Serve the index.html landing page explicitly passing the loadedOrbs array into the public controller
 app.get('/', publicController.getLandingPage);
+
+
+
+// --- ROUTES: STATISTICS/METRICS ---
+// GET /stats : Provides statistics data to the landing page
+//app.get('/stats', publicController.getStats);
+
+
+
+// --- GLOBAL API UMBRELLA (track request statistics for EVERY request) ---
+//app.use('/api/v1', statsTracker.recordRequest);
 
 
 

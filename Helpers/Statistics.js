@@ -1,7 +1,14 @@
 const fs = require('fs');
 const path = require('path');
 
-const statsFilePath = path.join(process.env.TRACKING_STATS_PATH, 'ApiRequests.json');
+let statsFilePath;
+const initializeStats = (config) => {
+  statsFilePath = path.join(config.TRACKING_STATS_PATH, 'ApiRequests.json');
+
+  if (stats.allTimeRequests === null) {
+    stats.allTimeRequests = readStatsFromFile().allTimeRequests;
+  }
+};
 
 const readStatsFromFile = () => {
   try {
@@ -18,7 +25,7 @@ const readStatsFromFile = () => {
 const stats = {
   sessionRequests: 0,
   startTime: new Date(),
-  allTimeRequests: readStatsFromFile().allTimeRequests,
+  allTimeRequests: null
 };
 
 const writeStatsToFile = () => {
@@ -30,13 +37,17 @@ const writeStatsToFile = () => {
   }
 };
 
-function incrementRequestCount() {
+function incrementRequestCount(config) {
+  initializeStats(config);
+
   stats.sessionRequests++;
   stats.allTimeRequests++;
   writeStatsToFile();
 }
 
-function getStats() {
+function getStats(config) {
+  initializeStats(config);
+
   return stats;
 }
 

@@ -18,17 +18,17 @@ const initializeController = (orbs) => {
 
 // Endpoint that provides statistics data
 const getStats = (req, res) => {
-	res.json(statsTracker.getStats());
+	res.json(statsTracker.getStats(req.orbConfig));
 };
 
 // Endpoint that serves the index.html landing page with loaded orb info
 const getLandingPage = (req, res) => {
 	const onlineOrbs = loadedOrbs.filter(orb => orb.status === 'Online').map(orb => orb.name);
 	const orbList = onlineOrbs.length > 0 ? onlineOrbs.join(', ') : '[none]';
-	log.info(`Serving the landing page. Loaded orbs: ${orbList}`);
+	req.log.info(`Serving the landing page. Loaded orbs: ${orbList}`);
 
 	// Read the index.html file
-	const indexPath = path.join(__dirname, 'public', 'index.html');
+	const indexPath = path.join(__dirname, '..', 'public', 'index.html');
 	fs.readFile(indexPath, 'utf8', (err, html) => {
 		if (err) {
 			console.error('Error reading index.html:', err);

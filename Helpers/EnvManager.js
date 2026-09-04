@@ -1,18 +1,30 @@
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
+const log = require('../middleware/log');
 
 // Define every variable the orb absolutely needs to function securely
 const REQUIRED_KEYS = [
     'PORT',
-    'NODE_ENV'
+    'NODE_ENV',
+    'TRACKING_STATS_PATH'
 ];
 
-const validateAndLoadEnv = (orbDir) => {
-    const envPath = path.join(orbDir, '.env');
+const validateAndLoadEnv = (dir) => {
+    const envPath = path.join(dir, '.env');
+
+    // Log the directory being used for the .env file
+    log.info(`Validating and loading .env from directory: ${dir}`);
+
+    // Ensure the directory exists
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+        log.info(`Directory did not exist. Created directory at: ${dir}`);
+    }
 
     // If the file doesn't exist at all, create it with empty defaults
     if (!fs.existsSync(envPath)) {
+        log.info(`.env file did not exist. Creating a new one at: ${envPath}`);
         const defaultEnv = REQUIRED_KEYS.map(key => `${key}=`).join('\n');
         fs.writeFileSync(envPath, defaultEnv, 'utf8');
         throw new Error(`No .env file found. A new one has been generated at ${envPath}. Please populate the required values.`);
@@ -51,6 +63,10 @@ const validateAndLoadEnv = (orbDir) => {
 
     // If we reach here, the file is perfect. Load it into process.env!
     dotenv.config({ path: envPath });
+
+    // Return the parsed configuration for potential further use
+    // This would be only THIS app's runtime environment
+    return parsedConfig;
 };
 
 module.exports = {

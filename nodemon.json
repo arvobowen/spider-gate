@@ -2,7 +2,7 @@
   "//": "Created by automated script generate-nodemon-watches.js to automate orb monitoring.",
   "watch": [
     ".",
-    "../sg-docketsafe-updates"
+    "../@KofileDev/sg-docketsafe-updates"
   ],
   "ignore": [
     "stats.json",
